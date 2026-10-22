@@ -6,7 +6,7 @@ import type {
   JobStatus,
   Paginated,
   WorkCategory,
-} from '@/types/api'
+} from '@/types'
 
 export interface ListJobsParams {
   city?: string

@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { IdentityStatus } from '@/types/api'
+import type { IdentityStatus } from '@/types'
 
 export type IdentityDocumentKind = 'dniFront' | 'dniBack' | 'selfie'
 

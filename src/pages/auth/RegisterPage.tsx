@@ -1,9 +1,9 @@
-import { Building2, MapPin, Wrench } from 'lucide-react'
+import { Building2, Wrench } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { toast } from 'sonner'
 
 import { FieldError } from '@/components/common/FieldError'
+import { LocationCityField } from '@/components/common/LocationCityField'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { useRegister } from '@/hooks/useAuth'
+import { useLocationCapture } from '@/hooks/useLocationCapture'
 import {
   LIMITS,
   validateEmail,
@@ -24,10 +25,13 @@ import {
   validateRequired,
 } from '@/lib/validation'
 import { cn } from '@/lib/utils'
-import type { Role } from '@/types/api'
+import type { Role } from '@/types'
 
 type FormErrors = Partial<
-  Record<'firstName' | 'lastName' | 'email' | 'password' | 'phone' | 'city', string | null>
+  Record<
+    'firstName' | 'lastName' | 'email' | 'password' | 'phone' | 'city' | 'location',
+    string | null
+  >
 >
 
 export function RegisterPage() {
@@ -42,36 +46,19 @@ export function RegisterPage() {
     city: '',
   })
   const [errors, setErrors] = useState<FormErrors>({})
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [locating, setLocating] = useState(false)
 
   const setField = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }))
   }
 
-  const captureLocation = () => {
-    if (!('geolocation' in navigator)) {
-      toast.error('Tu navegador no soporta geolocalizacion')
-      return
-    }
-    setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        })
-        setLocating(false)
-        toast.success('Ubicacion capturada')
-      },
-      () => {
-        setLocating(false)
-        toast.error('No pudimos obtener tu ubicacion')
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    )
-  }
+  const { coords, locating, capture } = useLocationCapture({
+    onCity: (city) =>
+      setForm((prev) => ({ ...prev, city })),
+    onError: (message) =>
+      setErrors((prev) => ({ ...prev, location: message })),
+  })
+
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -81,22 +68,24 @@ export function RegisterPage() {
       lastName: validateRequired(form.lastName, 'tu apellido', LIMITS.name),
       email: validateEmail(form.email),
       password: validatePassword(form.password),
-      phone: validatePhone(form.phone),
-      city: form.city.trim().length > LIMITS.city
-        ? `Maximo ${LIMITS.city} caracteres`
-        : null,
+      phone: validatePhone(form.phone, { required: true }),
+      city: validateRequired(form.city, 'tu ciudad', LIMITS.city),
+      location: coords ? null : 'Captura tu ubicacion para continuar',
     }
     setErrors(next)
     if (Object.values(next).some(Boolean)) return
+    if (!coords) return
 
     register.mutate({
       ...form,
       email: form.email.trim(),
-      phone: form.phone.trim() || undefined,
-      city: form.city.trim() || undefined,
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      phone: form.phone.trim(),
+      city: form.city.trim(),
       role,
-      latitude: coords?.lat,
-      longitude: coords?.lng,
+      latitude: coords.lat,
+      longitude: coords.lng,
     })
   }
 
@@ -187,10 +176,7 @@ export function RegisterPage() {
               value={form.password}
               onChange={(event) => setField('password', event.target.value)}
             />
-            <FieldError
-              message={errors.password}
-              className="text-muted-foreground"
-            />
+            <FieldError message={errors.password} />
             {!errors.password && (
               <p className="text-xs text-muted-foreground">
                 Minimo {LIMITS.passwordMin} caracteres.
@@ -200,7 +186,7 @@ export function RegisterPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="phone">WhatsApp (opcional)</Label>
+              <Label htmlFor="phone">WhatsApp</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -214,35 +200,16 @@ export function RegisterPage() {
               />
               <FieldError message={errors.phone} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">Ciudad (opcional)</Label>
-              <Input
-                id="city"
-                placeholder="Santa Cruz"
-                maxLength={LIMITS.city}
-                autoComplete="address-level2"
-                aria-invalid={Boolean(errors.city)}
-                value={form.city}
-                onChange={(event) => setField('city', event.target.value)}
-              />
-              <FieldError message={errors.city} />
-            </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={captureLocation}
-            disabled={locating}
-          >
-            <MapPin />
-            {coords
-              ? 'Ubicacion capturada'
-              : locating
-                ? 'Obteniendo ubicacion...'
-                : 'Usar mi ubicacion actual'}
-          </Button>
+          <LocationCityField
+            city={form.city}
+            error={errors.city ?? errors.location}
+            locating={locating}
+            onCapture={capture}
+            hasLocation={Boolean(coords)}
+            hint="Necesitas capturar tu ubicacion para crear la cuenta."
+          />
 
           <Button type="submit" className="w-full" disabled={register.isPending}>
             {register.isPending ? 'Creando cuenta...' : 'Crear cuenta'}

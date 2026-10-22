@@ -17,7 +17,7 @@ import { useOpenJobs } from '@/hooks/useJobs'
 import { LIMITS } from '@/lib/validation'
 import { useAuthStore } from '@/store/auth'
 import { useJobFilters } from '@/store/filters'
-import { CATEGORY_OPTIONS } from '@/types/api'
+import { CATEGORY_OPTIONS } from '@/types'
 
 const PAGE_SIZE = 10
 

@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { resolveMediaUrl } from '@/lib/api'
 import { formatDistance, getInitials } from '@/lib/format'
-import type { Applicant } from '@/types/api'
-import { CATEGORY_LABELS } from '@/types/api'
+import type { Applicant } from '@/types'
+import { CATEGORY_LABELS } from '@/types'
 
 function whatsappLink(phone: string, jobTitle: string): string {
   const digits = phone.replace(/[^\d]/g, '')
@@ -37,6 +37,8 @@ export function ApplicantCard({
   const avatar = applicant.avatarUrl
     ? resolveMediaUrl(applicant.avatarUrl)
     : null
+
+  const showWhatsapp = applicant.status === 'ACCEPTED'
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -112,9 +114,9 @@ export function ApplicantCard({
         </div>
       </div>
 
-      {(onSelect || applicant.phone) && (
+      {(onSelect || showWhatsapp) && (
         <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          {applicant.phone && (
+          {showWhatsapp && applicant.phone && (
             <Button asChild variant="outline" size="sm">
               <a
                 href={whatsappLink(applicant.phone, jobTitle)}

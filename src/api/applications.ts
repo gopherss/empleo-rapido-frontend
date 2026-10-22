@@ -4,7 +4,7 @@ import type {
   ApplicationStatus,
   MyApplication,
   Paginated,
-} from '@/types/api'
+} from '@/types'
 
 export async function applyToJob(
   jobId: string,

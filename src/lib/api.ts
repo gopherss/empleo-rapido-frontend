@@ -5,7 +5,7 @@ import axios, {
 } from 'axios'
 
 import { useAuthStore } from '@/store/auth'
-import type { ApiError, AuthResponse } from '@/types/api'
+import type { ApiError, AuthResponse } from '@/types'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, '')

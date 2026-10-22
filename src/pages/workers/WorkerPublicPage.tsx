@@ -13,7 +13,7 @@ import {
 import { useWorkerCv, useWorkerReviews } from '@/hooks/useWorkers'
 import { resolveMediaUrl } from '@/lib/api'
 import { formatDate, formatMoney, getInitials } from '@/lib/format'
-import { CATEGORY_LABELS } from '@/types/api'
+import { CATEGORY_LABELS } from '@/types'
 
 export function WorkerPublicPage() {
   const { id } = useParams<{ id: string }>()

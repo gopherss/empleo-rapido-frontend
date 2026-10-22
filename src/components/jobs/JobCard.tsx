@@ -5,8 +5,8 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { resolveMediaUrl } from '@/lib/api'
 import { formatDistance, formatMoney, formatRelativeDate } from '@/lib/format'
 import { useAuthStore } from '@/store/auth'
-import type { JobListItem } from '@/types/api'
-import { CATEGORY_LABELS } from '@/types/api'
+import type { JobListItem } from '@/types'
+import { CATEGORY_LABELS } from '@/types'
 
 export function JobCard({ job }: { job: JobListItem }) {
   const photo = job.photo ? resolveMediaUrl(job.photo) : null

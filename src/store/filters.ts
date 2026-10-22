@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { WorkCategory } from '@/types/api'
+import type { WorkCategory } from '@/types'
 
 export interface JobFilters {
   category: WorkCategory | 'ALL'

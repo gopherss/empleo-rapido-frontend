@@ -1,4 +1,4 @@
-import { MapPin, ShieldAlert } from 'lucide-react'
+import { PenLine, ShieldAlert } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { PhotoPicker } from '@/components/common/PhotoPicker'
 import { PageLoader } from '@/components/common/Spinner'
 import { FieldError } from '@/components/common/FieldError'
+import { LocationCityField } from '@/components/common/LocationCityField'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -24,15 +25,16 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateJob, useJob, useUpdateJob } from '@/hooks/useJobs'
-import { reverseGeocodeCity } from '@/lib/geocode'
-import { LIMITS, validateRequired } from '@/lib/validation'
+import { useLocationCapture } from '@/hooks/useLocationCapture'
+import { useUpdateMe } from '@/hooks/useUsers'
 import { useAuthStore } from '@/store/auth'
-import type { Currency, JobDetail, WorkCategory } from '@/types/api'
+import { LIMITS, validateRequired } from '@/lib/validation'
+import type { Currency, JobDetail, WorkCategory } from '@/types'
 import {
   CATEGORY_OPTIONS,
   CURRENCY_OPTIONS,
   CURRENCY_SYMBOLS,
-} from '@/types/api'
+} from '@/types'
 
 interface JobFormProps {
   isEdit: boolean
@@ -44,6 +46,8 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
   const navigate = useNavigate()
   const createJob = useCreateJob()
   const updateJob = useUpdateJob(existing?.id ?? '')
+  const updateMe = useUpdateMe()
+  const user = useAuthStore((state) => state.user)
 
   const [title, setTitle] = useState(existing?.title ?? '')
   const [description, setDescription] = useState(existing?.description ?? '')
@@ -51,7 +55,10 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
     existing?.category ?? 'PLOMERIA',
   )
   const [city, setCity] = useState(existing?.city ?? defaultCity)
-  const [address, setAddress] = useState(existing?.address ?? '')
+  const [address, setAddress] = useState(existing?.address ?? user?.address ?? '')
+  const [editingAddress, setEditingAddress] = useState(
+    Boolean(existing) || !user?.address,
+  )
   const [budget, setBudget] = useState(
     existing?.budget ? String(existing.budget) : '',
   )
@@ -61,7 +68,6 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     existing ? { lat: existing.latitude, lng: existing.longitude } : null,
   )
-  const [locating, setLocating] = useState(false)
   const [photos, setPhotos] = useState<File[]>([])
   const [errors, setErrors] = useState<
     Partial<Record<'title' | 'description' | 'city' | 'budget' | 'address', string | null>>
@@ -73,31 +79,14 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }))
   }
 
-  const captureLocation = () => {
-    if (!('geolocation' in navigator)) {
-      toast.error('Tu navegador no soporta geolocalizacion')
-      return
-    }
-    setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-        setCoords({ lat, lng })
-        const detectedCity = await reverseGeocodeCity(lat, lng)
-        if (detectedCity) {
-          setCity(detectedCity)
-          clearError('city')
-        }
-        setLocating(false)
-      },
-      () => {
-        setLocating(false)
-        toast.error('No pudimos obtener tu ubicacion')
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    )
-  }
+  const { locating, capture } = useLocationCapture({
+    initialCoords: coords,
+    onCity: (detectedCity) => {
+      setCity(detectedCity)
+      clearError('city')
+    },
+    onCoords: (next) => setCoords(next),
+  })
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -110,10 +99,12 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
         'una descripcion',
         LIMITS.jobDescription,
       ),
-      city: isEdit ? null : validateRequired(city, 'la ciudad', LIMITS.city),      address:
-        address.trim().length > LIMITS.address
+      city: isEdit ? null : validateRequired(city, 'la ciudad', LIMITS.city),
+      address: isEdit
+        ? address.trim().length > LIMITS.address
           ? `Maximo ${LIMITS.address} caracteres`
-          : null,
+          : null
+        : validateRequired(address, 'la direccion', LIMITS.address),
       budget:
         budgetValue && (Number.isNaN(Number(budgetValue)) || Number(budgetValue) < 0)
           ? 'Ingresa un presupuesto valido'
@@ -142,20 +133,31 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
       return
     }
 
+    const onPublished = async () => {
+      if (address.trim() !== (user?.address ?? '')) {
+        try {
+          await updateMe.mutateAsync({ address: address.trim() })
+        } catch {
+          toast.error('El trabajo se publico, pero no se guardo la direccion')
+        }
+      }
+      navigate('/my-jobs')
+    }
+
     createJob.mutate(
       {
         title: title.trim(),
         description: description.trim(),
         category,
         city: city.trim(),
-        address: address.trim() || undefined,
+        address: address.trim(),
         latitude: coords.lat,
         longitude: coords.lng,
         budget: budgetValue ? Number(budgetValue) : undefined,
         currency,
         photos,
       },
-      { onSuccess: (job) => navigate(`/jobs/${job.id}`) },
+      { onSuccess: onPublished },
     )
   }
 
@@ -280,54 +282,56 @@ function JobForm({ isEdit, existing, defaultCity }: JobFormProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="address">Direccion (opcional)</Label>
-              <Input
-                id="address"
-                maxLength={LIMITS.address}
-                aria-invalid={Boolean(errors.address)}
-                placeholder="Av. Monseñor Rivero #123"
-                value={address}
-                onChange={(event) => {
-                  setAddress(event.target.value)
-                  clearError('address')
-                }}
-              />
+              <Label htmlFor="address">Direccion</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="address"
+                  maxLength={LIMITS.address}
+                  aria-invalid={Boolean(errors.address)}
+                  readOnly={!editingAddress}
+                  className={!editingAddress ? 'cursor-not-allowed bg-muted' : undefined}
+                  placeholder="Av. Monseñor Rivero #123"
+                  value={address}
+                  onChange={(event) => {
+                    setAddress(event.target.value)
+                    clearError('address')
+                  }}
+                />
+                {!editingAddress && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Editar direccion"
+                    onClick={() => setEditingAddress(true)}
+                  >
+                    <PenLine />
+                  </Button>
+                )}
+              </div>
               <FieldError message={errors.address} />
+              {!editingAddress && (
+                <p className="text-xs text-muted-foreground">
+                  Usamos la direccion guardada en tu perfil.
+                </p>
+              )}
             </div>
 
             {!isEdit && (
               <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Ciudad</Label>
-                    <Input
-                      id="city"
-                      readOnly
-                      aria-invalid={Boolean(errors.city)}
-                      placeholder="Usa 'Usar mi ubicacion'"
-                      className="cursor-not-allowed bg-muted"
-                      value={city}
-                    />
-                    <FieldError message={errors.city} />
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={captureLocation}
-                      disabled={locating}
-                    >
-                      <MapPin />
-                      {coords
-                        ? 'Ubicacion lista'
-                        : locating
-                          ? 'Obteniendo...'
-                          : 'Usar mi ubicacion'}
-                    </Button>
-                  </div>
-                </div>
-                {!coords && (
+                <LocationCityField
+                  city={city}
+                  error={errors.city}
+                  locating={locating}
+                  onCapture={capture}
+                  hasLocation={Boolean(coords)}
+                  placeholder="Usa 'Usar mi ubicacion'"
+                  buttonLabel="Usar mi ubicacion"
+                  loadingLabel="Obteniendo..."
+                  capturedLabel="Ubicacion lista"
+                  hint="Necesitas marcar la ubicacion del trabajo (geolocalizacion)."
+                />
+                {!coords && !errors.city && (
                   <p className="text-xs text-warning">
                     Necesitas marcar la ubicacion del trabajo
                     (geolocalizacion).

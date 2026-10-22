@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { AuthResponse, AuthUser, Role } from '@/types/api'
+import type { AuthResponse, AuthUser, Role } from '@/types'
 
 export interface RegisterPayload {
   email: string
@@ -7,10 +7,10 @@ export interface RegisterPayload {
   firstName: string
   lastName: string
   role: Role
-  phone?: string
-  city?: string
-  latitude?: number
-  longitude?: number
+  phone: string
+  city: string
+  latitude: number
+  longitude: number
 }
 
 export interface LoginPayload {

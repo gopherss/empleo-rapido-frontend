@@ -1,5 +1,5 @@
-import type { JobStatus } from '@/types/api'
-import { JOB_STATUS_LABELS } from '@/types/api'
+import type { JobStatus } from '@/types'
+import { JOB_STATUS_LABELS } from '@/types'
 import { cn } from '@/lib/utils'
 
 const statusStyles: Record<JobStatus, string> = {

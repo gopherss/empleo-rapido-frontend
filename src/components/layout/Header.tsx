@@ -18,8 +18,8 @@ import { getInitials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import { applyTheme, useThemeStore } from '@/store/theme'
-import type { Role } from '@/types/api'
-import { ROLE_LABELS } from '@/types/api'
+import type { Role } from '@/types'
+import { ROLE_LABELS } from '@/types'
 
 interface NavItem {
   to: string

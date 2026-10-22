@@ -1,4 +1,4 @@
-import type { ApplicationStatus, JobStatus } from '@/types/api'
+import type { ApplicationStatus, JobStatus } from '@/types'
 
 interface ApplicationFlowProps {
   status: ApplicationStatus

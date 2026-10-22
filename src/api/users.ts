@@ -1,11 +1,12 @@
 import { api } from '@/lib/api'
-import type { AuthUser } from '@/types/api'
+import type { AuthUser } from '@/types'
 
 export interface UpdateUserPayload {
   firstName?: string
   lastName?: string
   phone?: string
   city?: string
+  address?: string
 }
 
 export interface UpdateLocationPayload {

@@ -4,7 +4,7 @@ import type {
   Review,
   WorkCategory,
   WorkerCv,
-} from '@/types/api'
+} from '@/types'
 
 export interface UpdateWorkerCvPayload {
   headline?: string

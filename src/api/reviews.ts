@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { Review } from '@/types/api'
+import type { Review } from '@/types'
 
 export interface CreateReviewPayload {
   rating: number

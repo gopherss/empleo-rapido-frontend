@@ -31,7 +31,7 @@ import {
   type Currency,
   type WorkCategory,
   type WorkerCv,
-} from '@/types/api'
+} from '@/types'
 
 function WorkerCvForm({ cv }: { cv: WorkerCv }) {
   const updateCv = useUpdateMyCv()

@@ -10,7 +10,7 @@ export function formatDistance(km: number | null | undefined): string {
   return `${km.toFixed(1)} km`
 }
 
-import { CURRENCY_SYMBOLS, type Currency } from '@/types/api'
+import { CURRENCY_SYMBOLS, type Currency } from '@/types'
 
 export function formatMoney(
   value: string | number | null | undefined,

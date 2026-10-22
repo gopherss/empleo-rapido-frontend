@@ -28,7 +28,7 @@ import { useApplicants } from '@/hooks/useApplications'
 import { useCancelJob, useDeleteJob, useJob, useSelectWorker } from '@/hooks/useJobs'
 import { formatDate, formatDistance, formatMoney } from '@/lib/format'
 import { useAuthStore } from '@/store/auth'
-import { APPLICATION_STATUS_LABELS, CATEGORY_LABELS } from '@/types/api'
+import { APPLICATION_STATUS_LABELS, CATEGORY_LABELS } from '@/types'
 
 function whatsappLink(phone: string, jobTitle: string): string {
   const digits = phone.replace(/[^\d]/g, '')

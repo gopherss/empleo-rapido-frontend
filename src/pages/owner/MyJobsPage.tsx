@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMyJobs } from '@/hooks/useJobs'
 import { useAuthStore } from '@/store/auth'
-import { JOB_STATUS_LABELS, type JobStatus } from '@/types/api'
+import { JOB_STATUS_LABELS, type JobStatus } from '@/types'
 
 const filters: (JobStatus | 'ALL')[] = [
   'ALL',

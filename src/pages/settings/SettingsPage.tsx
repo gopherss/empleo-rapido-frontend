@@ -1,9 +1,9 @@
-import { MapPin } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
 import { AvatarUploader } from '@/components/common/AvatarUploader'
 import { FieldError } from '@/components/common/FieldError'
 import { IdentityVerificationCard } from '@/components/identity/IdentityVerificationCard'
+import { LocationCityField } from '@/components/common/LocationCityField'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useGeolocation } from '@/hooks/useGeolocation'
+import { useLocationCapture } from '@/hooks/useLocationCapture'
 import { useUpdateMe } from '@/hooks/useUsers'
 import { useAuthStore } from '@/store/auth'
-import { ROLE_LABELS } from '@/types/api'
+import { ROLE_LABELS } from '@/types'
 import {
   LIMITS,
   validatePhone,
@@ -31,16 +31,24 @@ type FormErrors = Partial<
 export function SettingsPage() {
   const user = useAuthStore((state) => state.user)
   const updateMe = useUpdateMe()
-  const { request, isLoading: locating } = useGeolocation()
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [city, setCity] = useState(user?.city ?? '')
+  const [address, setAddress] = useState(user?.address ?? '')
   const [errors, setErrors] = useState<FormErrors>({})
 
   const clearError = (key: keyof FormErrors) => {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }))
   }
+
+  const { locating, capture } = useLocationCapture({
+    persist: true,
+    onCity: (detectedCity) => {
+      setCity(detectedCity)
+      clearError('city')
+    },
+  })
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -59,6 +67,7 @@ export function SettingsPage() {
       lastName: lastName.trim(),
       phone: phone.trim(),
       city: city.trim(),
+      address: address.trim(),
     })
   }
 
@@ -133,37 +142,37 @@ export function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="city">Ciudad</Label>
+              <Label htmlFor="address">Direccion</Label>
               <Input
-                id="city"
-                readOnly
-                value={city}
-                placeholder="Usa 'Actualizar ubicacion'"
-                className="cursor-not-allowed bg-muted"
+                id="address"
+                maxLength={LIMITS.address}
+                placeholder="Av. Monseñor Rivero #123"
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Se asigna automaticamente desde tu ubicacion.
+                Se usa como direccion por defecto al publicar un trabajo.
               </p>
-              <FieldError message={errors.city} />
             </div>
+
+            <LocationCityField
+              city={city}
+              error={errors.city}
+              locating={locating}
+              onCapture={capture}
+              hasLocation={
+                user?.latitude !== null && user?.longitude !== null
+              }
+              placeholder="Usa 'Actualizar ubicacion'"
+              buttonLabel="Actualizar ubicacion"
+              loadingLabel="Obteniendo..."
+              capturedLabel="Ubicacion actualizada"
+              hint="Se asigna automaticamente desde tu ubicacion."
+            />
 
             <div className="flex flex-wrap items-center gap-3">
               <Button type="submit" disabled={updateMe.isPending}>
                 {updateMe.isPending ? 'Guardando...' : 'Guardar cambios'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  request((detectedCity) => {
-                    setCity(detectedCity)
-                    clearError('city')
-                  })
-                }
-                disabled={locating}
-              >
-                <MapPin />
-                {locating ? 'Obteniendo...' : 'Actualizar ubicacion'}
               </Button>
             </div>
 

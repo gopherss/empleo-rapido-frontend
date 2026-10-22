@@ -21,7 +21,7 @@ import {
   APPLICATION_STATUS_LABELS,
   CATEGORY_LABELS,
   type ApplicationStatus,
-} from '@/types/api'
+} from '@/types'
 
 const statusVariant: Record<
   ApplicationStatus,

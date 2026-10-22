@@ -4,7 +4,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { PageLoader } from '@/components/common/Spinner'
 import { roleHome } from '@/lib/navigation'
 import { useAuthStore } from '@/store/auth'
-import type { Role } from '@/types/api'
+import type { Role } from '@/types'
 
 export function ProtectedRoute({ roles }: { roles?: Role[] }) {
   const hydrated = useAuthStore((state) => state.hydrated)
