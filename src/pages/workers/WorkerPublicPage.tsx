@@ -1,24 +1,56 @@
-import { MapPin, Phone, Briefcase, Clock } from 'lucide-react'
-import { useParams } from 'react-router-dom'
+import { MapPin, Phone, Briefcase, Clock, Check, X, ArrowLeft } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
 
 import { PageLoader } from '@/components/common/Spinner'
 import { RatingStars } from '@/components/common/RatingStars'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { useWorkerCv, useWorkerReviews } from '@/hooks/useWorkers'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { useAuthStore } from '@/store/auth'
 import { resolveMediaUrl } from '@/lib/api'
 import { formatDate, formatMoney, getInitials } from '@/lib/format'
+import { useWorkerCv, useWorkerReviews } from '@/hooks/useWorkers'
+import { useJob, useSelectWorker } from '@/hooks/useJobs'
+import { useApplicants, useRejectApplication } from '@/hooks/useApplications'
 import { CATEGORY_LABELS } from '@/types'
 
 export function WorkerPublicPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
   const { data: cv, isLoading, isError } = useWorkerCv(id)
   const { data: reviews } = useWorkerReviews(id)
+  const [zoom, setZoom] = useState(false)
+
+  const fromJobId = searchParams.get('fromJob') ?? undefined
+  const { data: job } = useJob(fromJobId)
+  const { data: applicants } = useApplicants(fromJobId)
+  const selectWorker = useSelectWorker(fromJobId ?? '')
+  const rejectApplication = useRejectApplication(fromJobId ?? '')
+
+  const application = applicants?.find((a) => a.workerId === id)
+  const canAct =
+    Boolean(fromJobId && job && user && job.homeowner.id === user.id && job.status === 'OPEN' && application?.status === 'PENDING')
+
+  const handleSelect = () => {
+    if (!id) return
+    selectWorker.mutate(id, { onSuccess: () => navigate(`/jobs/${fromJobId}`) })
+  }
+
+  const handleReject = () => {
+    if (!application) return
+    rejectApplication.mutate(application.applicationId, {
+      onSuccess: () => navigate(`/jobs/${fromJobId}`),
+    })
+  }
 
   if (isLoading) return <PageLoader />
 
@@ -30,13 +62,25 @@ export function WorkerPublicPage() {
 
   return (
     <div className="space-y-6">
+      {fromJobId && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/jobs/${fromJobId}`)}
+          className="-ml-2"
+        >
+          <ArrowLeft />
+          Volver al trabajo
+        </Button>
+      )}
       <div className="flex items-start gap-4">
         <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-2xl font-semibold text-muted-foreground">
           {cv.avatarUrl ? (
             <img
               src={resolveMediaUrl(cv.avatarUrl)}
               alt=""
-              className="size-full object-cover"
+              className="size-full cursor-zoom-in object-cover"
+              onClick={() => setZoom(true)}
             />
           ) : (
             getInitials(cv.firstName, cv.lastName)
@@ -182,8 +226,42 @@ export function WorkerPublicPage() {
               )}
             </CardContent>
           </Card>
+
+          {canAct && (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={handleSelect}
+                disabled={selectWorker.isPending}
+              >
+                <Check />
+                {selectWorker.isPending ? 'Seleccionando...' : 'Aceptar'}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleReject}
+                disabled={rejectApplication.isPending}
+              >
+                <X />
+                {rejectApplication.isPending ? 'Rechazando...' : 'Rechazar'}
+              </Button>
+            </div>
+          )}
         </aside>
       </div>
+
+      <Dialog open={zoom} onOpenChange={setZoom}>
+        <DialogContent className="max-w-md p-2">
+          {cv.avatarUrl && (
+            <img
+              src={resolveMediaUrl(cv.avatarUrl)}
+              alt=""
+              className="max-h-[80vh] w-full rounded-md object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

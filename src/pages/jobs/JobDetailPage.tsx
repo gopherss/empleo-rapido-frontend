@@ -9,7 +9,6 @@ import {
   Trash2,
   Users,
 } from 'lucide-react'
-import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ApplicantCard } from '@/components/applications/ApplicantCard'
@@ -25,7 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useApplicants } from '@/hooks/useApplications'
-import { useCancelJob, useDeleteJob, useJob, useSelectWorker } from '@/hooks/useJobs'
+import { useCancelJob, useDeleteJob, useJob } from '@/hooks/useJobs'
 import { formatDate, formatDistance, formatMoney } from '@/lib/format'
 import { useAuthStore } from '@/store/auth'
 import { APPLICATION_STATUS_LABELS, CATEGORY_LABELS } from '@/types'
@@ -52,10 +51,8 @@ export function JobDetailPage() {
   const { data: applicants } = useApplicants(
     canManage ? job?.id : undefined,
   )
-  const selectWorker = useSelectWorker(job?.id ?? '')
   const cancelJob = useCancelJob()
   const deleteJob = useDeleteJob()
-  const [pendingWorker, setPendingWorker] = useState<string | null>(null)
 
   if (isLoading) return <PageLoader />
   if (isError || !job) {
@@ -71,19 +68,18 @@ export function JobDetailPage() {
     )
   }
 
-  const handleSelect = (workerId: string) => {
-    setPendingWorker(workerId)
-    selectWorker.mutate(workerId, {
-      onSettled: () => setPendingWorker(null),
-    })
-  }
-
   return (
     <div className="space-y-6">
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => navigate(-1)}
+        onClick={() => {
+          if (isOwner) {
+            navigate('/my-jobs')
+            return
+          }
+          navigate(-1)
+        }}
         className="-ml-2"
       >
         <ArrowLeft />
@@ -167,9 +163,7 @@ export function JobDetailPage() {
                     key={applicant.applicationId}
                     applicant={applicant}
                     jobTitle={job.title}
-                    onSelect={handleSelect}
-                    isSelecting={pendingWorker === applicant.workerId}
-                    selectDisabled={selectWorker.isPending}
+                    jobId={job.id}
                   />
                 ))}
               </div>

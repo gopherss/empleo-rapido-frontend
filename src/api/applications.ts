@@ -53,3 +53,12 @@ export async function withdrawApplication(
   )
   return data
 }
+
+export async function rejectApplication(
+  id: string,
+): Promise<{ success: boolean }> {
+  const { data } = await api.post<{ success: boolean }>(
+    `/applications/${id}/reject`,
+  )
+  return data
+}

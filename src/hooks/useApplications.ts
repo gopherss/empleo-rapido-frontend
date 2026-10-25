@@ -6,6 +6,7 @@ import {
   getPendingApplicationsCount,
   listApplicants,
   listMyApplications,
+  rejectApplication,
   withdrawApplication,
   type ListMyApplicationsParams,
 } from '@/api/applications'
@@ -70,6 +71,23 @@ export function useWithdrawApplication() {
       })
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all })
       toast.success('Postulacion retirada')
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+  })
+}
+
+export function useRejectApplication(jobId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => rejectApplication(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.applications.forJob(jobId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(jobId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.mine })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.applications.pendingCount,
+      })
+      toast.success('Postulacion rechazada')
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
   })

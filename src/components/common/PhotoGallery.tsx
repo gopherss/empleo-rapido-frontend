@@ -70,7 +70,7 @@ export function PhotoGallery({
             <img
               src={resolveMediaUrl(photo)}
               alt={`Foto ${index + 1}`}
-              className="size-full max-h-80 object-cover transition-transform duration-200 group-hover:scale-105"
+              className="size-full max-h-80 object-cover transition-transform duration-200 ease-in-out group-hover:scale-110"
               loading="lazy"
             />
             <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:bg-black/30 group-hover:opacity-100">

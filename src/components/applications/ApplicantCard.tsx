@@ -20,19 +20,13 @@ function whatsappLink(phone: string, jobTitle: string): string {
 interface ApplicantCardProps {
   applicant: Applicant
   jobTitle: string
-  onSelect?: (workerId: string) => void
-  isSelecting?: boolean
-  selectDisabled?: boolean
-  isSelected?: boolean
+  jobId?: string
 }
 
 export function ApplicantCard({
   applicant,
   jobTitle,
-  onSelect,
-  isSelecting,
-  selectDisabled,
-  isSelected,
+  jobId,
 }: ApplicantCardProps) {
   const avatar = applicant.avatarUrl
     ? resolveMediaUrl(applicant.avatarUrl)
@@ -41,35 +35,36 @@ export function ApplicantCard({
   const showWhatsapp = applicant.status === 'ACCEPTED'
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-      <div className="flex items-start gap-4">
-        <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-lg font-semibold text-muted-foreground">
-          {avatar ? (
-            <img src={avatar} alt="" className="size-full object-cover" />
-          ) : (
-            getInitials(applicant.firstName, applicant.lastName)
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <Link
-                to={`/workers/${applicant.workerId}`}
-                className="truncate font-semibold hover:text-primary hover:underline"
-              >
-                {applicant.firstName} {applicant.lastName}
-              </Link>
-              <p className="truncate text-sm text-muted-foreground">
-                {applicant.headline ?? 'Trabajador de reparaciones'}
-              </p>
-            </div>
-            <RatingStars
-              value={applicant.averageRating}
-              showValue
-              className="shrink-0"
-            />
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:bg-accent/30">
+      <Link
+        to={jobId ? `/workers/${applicant.workerId}?fromJob=${jobId}` : `/workers/${applicant.workerId}`}
+        className="block"
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-lg font-semibold text-muted-foreground">
+            {avatar ? (
+              <img src={avatar} alt="" className="size-full object-cover" />
+            ) : (
+              getInitials(applicant.firstName, applicant.lastName)
+            )}
           </div>
+
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-semibold">
+                  {applicant.firstName} {applicant.lastName}
+                </p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {applicant.headline ?? 'Trabajador de reparaciones'}
+                </p>
+              </div>
+              <RatingStars
+                value={applicant.averageRating}
+                showValue
+                className="shrink-0"
+              />
+            </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {applicant.city && (
@@ -111,38 +106,23 @@ export function ApplicantCard({
               "{applicant.message}"
             </p>
           )}
+          </div>
         </div>
-      </div>
+      </Link>
 
-      {(onSelect || showWhatsapp) && (
+      {showWhatsapp && applicant.phone && (
         <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          {showWhatsapp && applicant.phone && (
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={whatsappLink(applicant.phone, jobTitle)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <MessageCircle />
-                WhatsApp
-              </a>
-            </Button>
-          )}
-          {onSelect &&
-            (isSelected ? (
-              <Badge variant="success" className="ml-auto">
-                Seleccionado
-              </Badge>
-            ) : (
-              <Button
-                size="sm"
-                className="ml-auto"
-                onClick={() => onSelect(applicant.workerId)}
-                disabled={isSelecting || selectDisabled}
-              >
-                {isSelecting ? 'Seleccionando...' : 'Seleccionar'}
-              </Button>
-            ))}
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={whatsappLink(applicant.phone, jobTitle)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MessageCircle />
+              WhatsApp
+            </a>
+          </Button>
         </div>
       )}
     </div>
