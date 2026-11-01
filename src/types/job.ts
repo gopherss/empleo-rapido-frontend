@@ -53,6 +53,19 @@ export interface JobDetail extends JobListItem {
   worker?: JobContact | null
   selectedAt?: string | null
   completedAt?: string | null
+  agreementConfirmedAt?: string | null
   review?: Review | null
+  homeownerReview?: {
+    id: string
+    rating: number
+    comment: string | null
+    createdAt: string
+    author?: {
+      id: string
+      firstName: string
+      lastName: string
+      avatarUrl: string | null
+    }
+  } | null
   myApplicationStatus?: ApplicationStatus | null
 }

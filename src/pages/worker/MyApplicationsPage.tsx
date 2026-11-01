@@ -1,4 +1,4 @@
-import { FileText, X } from 'lucide-react'
+import { FileText, X, MessageCircle } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -33,9 +33,9 @@ const statusVariant: Record<
   WITHDRAWN: 'secondary',
 }
 
-type StatusFilter = ApplicationStatus | 'ALL'
+type StatusFilter = ApplicationStatus | 'ALL' | 'COMPLETED'
 
-const filters: StatusFilter[] = ['ALL', ...APPLICATION_STATUSES]
+const filters: StatusFilter[] = ['ALL', ...APPLICATION_STATUSES, 'COMPLETED']
 
 const PAGE_SIZE = 10
 
@@ -46,15 +46,23 @@ export function MyApplicationsPage() {
   const [page, setPage] = useState(1)
 
   const { data, isLoading } = useMyApplications({
-    status: status === 'ALL' ? undefined : status,
+    status: status === 'ALL' || status === 'COMPLETED' ? undefined : status,
     q: q || undefined,
     page,
     limit: PAGE_SIZE,
   })
   const withdraw = useWithdrawApplication()
 
-  const applications = data?.data ?? []
-  const hasFilters = status !== 'ALL' || q !== ''
+  const applications = (data?.data ?? []).filter((application) => {
+    if (status === 'ACCEPTED') {
+      return application.jobStatus === 'IN_PROGRESS'
+    }
+    if (status === 'COMPLETED') {
+      return application.status === 'ACCEPTED' && application.jobStatus === 'COMPLETED'
+    }
+    return true
+  })
+  const hasFilters = status !== 'ALL' || q !== '' || status === 'COMPLETED' as StatusFilter
 
   const onSubmitSearch = (event: FormEvent) => {
     event.preventDefault()
@@ -97,7 +105,9 @@ export function MyApplicationsPage() {
                 <TabsTrigger key={value} value={value}>
                   {value === 'ALL'
                     ? 'Todas'
-                    : APPLICATION_STATUS_LABELS[value]}
+                    : value === 'COMPLETED'
+                      ? 'Finalizadas'
+                      : APPLICATION_STATUS_LABELS[value]}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -210,6 +220,26 @@ export function MyApplicationsPage() {
                   </Button>
                 )}
               </div>
+
+              {application.status === 'ACCEPTED' && application.jobStatus === 'IN_PROGRESS' && (
+                <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
+                  <span className="relative">
+                    <MessageCircle className="size-4" />
+                    <span className="absolute -right-0.5 -top-0.5 flex size-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+                      <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    En negociacion por WhatsApp
+                    <span className="ml-1 inline-flex">
+                      <span className="animate-[pulse_1.4s_ease-in-out_infinite]">.</span>
+                      <span className="animate-[pulse_1.4s_ease-in-out_infinite] [animation-delay:200ms]">.</span>
+                      <span className="animate-[pulse_1.4s_ease-in-out_infinite] [animation-delay:400ms]">.</span>
+                    </span>
+                  </span>
+                </div>
+              )}
 
               <ApplicationFlow
                 status={application.status}

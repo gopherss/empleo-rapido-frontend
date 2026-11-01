@@ -3,11 +3,13 @@ import { toast } from 'sonner'
 
 import {
   cancelJob,
+  confirmAgreement,
   createJob,
   deleteJob,
   getJob,
   getMyJobs,
   listOpenJobs,
+  releaseWorker,
   selectWorker,
   updateJob,
   type CreateJobPayload,
@@ -83,6 +85,52 @@ export function useSelectWorker(jobId: string) {
       toast.success('Trabajador seleccionado')
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
+  })
+}
+
+export function useConfirmAgreement(jobId?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => {
+      if (!jobId) throw new Error('Falta el trabajo')
+      return confirmAgreement(jobId)
+    },
+    onSuccess: () => {
+      if (jobId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(jobId) })
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.mine })
+      toast.success('Acuerdo confirmado')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error))
+    },
+  })
+}
+
+export function useReleaseWorker(jobId?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => {
+      if (!jobId) throw new Error('Falta el trabajo')
+      return releaseWorker(jobId)
+    },
+    onSuccess: () => {
+      if (jobId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(jobId) })
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.mine })
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.applications.pendingCount,
+      })
+      toast.success('Se libero al trabajador. El trabajo vuelve a estar disponible')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error))
+    },
   })
 }
 

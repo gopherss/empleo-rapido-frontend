@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useLogout } from '@/hooks/useAuth'
 import { usePendingApplicationsCount } from '@/hooks/useApplications'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { resolveMediaUrl } from '@/lib/api'
 import { getInitials } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -97,6 +98,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
+          {user && <NotificationBell />}
           <Button
             variant="ghost"
             size="icon"

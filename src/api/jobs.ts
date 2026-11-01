@@ -111,6 +111,16 @@ export async function selectWorker(
   return data
 }
 
+export async function confirmAgreement(id: string): Promise<JobDetail> {
+  const { data } = await api.post<JobDetail>(`/jobs/${id}/confirm-agreement`)
+  return data
+}
+
+export async function releaseWorker(id: string): Promise<JobDetail> {
+  const { data } = await api.post<JobDetail>(`/jobs/${id}/release`)
+  return data
+}
+
 export async function cancelJob(id: string): Promise<JobDetail> {
   const { data } = await api.post<JobDetail>(`/jobs/${id}/cancel`)
   return data

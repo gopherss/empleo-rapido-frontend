@@ -114,7 +114,7 @@ export function WorkerPublicPage() {
             {cv.experienceYears !== null && (
               <span className="inline-flex items-center gap-1">
                 <Clock className="size-4" />
-                {cv.experienceYears} anos de experiencia
+                {cv.experienceYears} años de experiencia
               </span>
             )}
           </div>

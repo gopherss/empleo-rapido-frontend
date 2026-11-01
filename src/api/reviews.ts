@@ -20,3 +20,19 @@ export async function createReview(
   const { data } = await api.post<Review>(`/jobs/${jobId}/review`, form)
   return data
 }
+
+export interface CreateHomeownerReviewPayload {
+  rating: number
+  comment?: string
+}
+
+export async function createHomeownerReview(
+  jobId: string,
+  payload: CreateHomeownerReviewPayload,
+): Promise<Review> {
+  const { data } = await api.post<Review>(
+    `/jobs/${jobId}/review-homeowner`,
+    payload,
+  )
+  return data
+}

@@ -1,7 +1,6 @@
-import { Camera } from 'lucide-react'
+import { Camera, Loader2 } from 'lucide-react'
 import { useRef } from 'react'
 
-import { Button } from '@/components/ui/button'
 import { useUploadAvatar } from '@/hooks/useUsers'
 import { resolveMediaUrl } from '@/lib/api'
 import { getInitials } from '@/lib/format'
@@ -20,35 +19,31 @@ export function AvatarUploader() {
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-lg font-semibold text-muted-foreground">
-        {user?.avatarUrl ? (
-          <img
-            src={resolveMediaUrl(user.avatarUrl)}
-            alt=""
-            className="size-full object-cover"
-          />
-        ) : (
-          getInitials(user?.firstName, user?.lastName)
-        )}
-      </span>
-
-      <div className="space-y-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploadAvatar.isPending}
-        >
-          <Camera />
-          {uploadAvatar.isPending ? 'Subiendo...' : 'Cambiar foto'}
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          JPG, PNG o WebP
-        </p>
-      </div>
-
+    <button
+      type="button"
+      onClick={() => inputRef.current?.click()}
+      disabled={uploadAvatar.isPending}
+      className="group relative flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-2xl font-semibold text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
+      aria-label="Cambiar foto de perfil"
+    >
+      {user?.avatarUrl ? (
+        <img
+          src={resolveMediaUrl(user.avatarUrl)}
+          alt=""
+          className="size-full object-cover"
+        />
+      ) : (
+        getInitials(user?.firstName, user?.lastName)
+      )}
+      {uploadAvatar.isPending ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/60">
+          <Loader2 className="size-7 animate-spin text-white" />
+        </span>
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+          <Camera className="size-7 text-white" />
+        </span>
+      )}
       <input
         ref={inputRef}
         type="file"
@@ -56,6 +51,6 @@ export function AvatarUploader() {
         hidden
         onChange={(event) => onChange(event.target.files)}
       />
-    </div>
+    </button>
   )
 }

@@ -151,7 +151,7 @@ function WorkerCvForm({ cv }: { cv: WorkerCv }) {
                   id="headline"
                   maxLength={LIMITS.headline}
                   aria-invalid={Boolean(errors.headline)}
-                  placeholder="Ej: Plomero con 10 anos de experiencia"
+                  placeholder="Ej: Plomero con tiempo de experiencia"
                   value={headline}
                   onChange={(event) => {
                     setHeadline(event.target.value)
@@ -254,7 +254,7 @@ function WorkerCvForm({ cv }: { cv: WorkerCv }) {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="experience">Anos de experiencia</Label>
+                  <Label htmlFor="experience">Tiempo de experiencia</Label>
                   <Input
                     id="experience"
                     type="number"

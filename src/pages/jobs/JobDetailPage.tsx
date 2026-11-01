@@ -19,12 +19,13 @@ import { RatingStars } from '@/components/common/RatingStars'
 import { PageLoader } from '@/components/common/Spinner'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { ReviewDialog } from '@/components/jobs/ReviewDialog'
+import { HomeownerReviewDialog } from '@/components/jobs/HomeownerReviewDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useApplicants } from '@/hooks/useApplications'
-import { useCancelJob, useDeleteJob, useJob } from '@/hooks/useJobs'
+import { useCancelJob, useDeleteJob, useJob, useReleaseWorker, useConfirmAgreement } from '@/hooks/useJobs'
 import { formatDate, formatDistance, formatMoney } from '@/lib/format'
 import { useAuthStore } from '@/store/auth'
 import { APPLICATION_STATUS_LABELS, CATEGORY_LABELS } from '@/types'
@@ -53,6 +54,8 @@ export function JobDetailPage() {
   )
   const cancelJob = useCancelJob()
   const deleteJob = useDeleteJob()
+  const releaseWorker = useReleaseWorker(job?.id)
+  const confirmAgreement = useConfirmAgreement(job?.id)
 
   if (isLoading) return <PageLoader />
   if (isError || !job) {
@@ -141,6 +144,78 @@ export function JobDetailPage() {
                 )}
                 {job.review.photos.length > 0 && (
                   <PhotoGallery photos={job.review.photos} />
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {job.status === 'COMPLETED' && isAssignedWorker && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Calificar al dueno</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {job.homeownerReview ? (
+                  <>
+                    <RatingStars
+                      value={job.homeownerReview.rating}
+                      size="md"
+                      showValue
+                    />
+                    {job.homeownerReview.comment && (
+                      <p className="text-sm text-muted-foreground">
+                        {job.homeownerReview.comment}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Cuentanos como fue tu experiencia con el dueno.
+                    </p>
+                    <HomeownerReviewDialog
+                      jobId={job.id}
+                      trigger={
+                        <Button className="w-full">Calificar al dueno</Button>
+                      }
+                    />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {job.status === 'COMPLETED' && isOwner && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Tu calificacion como dueno
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {job.homeownerReview ? (
+                  <>
+                    <RatingStars
+                      value={job.homeownerReview.rating}
+                      size="md"
+                      showValue
+                    />
+                    {job.homeownerReview.comment && (
+                      <p className="text-sm text-muted-foreground">
+                        {job.homeownerReview.comment}
+                      </p>
+                    )}
+                    {job.homeownerReview.author && (
+                      <p className="text-xs text-muted-foreground">
+                        Calificado por {job.homeownerReview.author.firstName}{' '}
+                        {job.homeownerReview.author.lastName}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    El trabajador aun no te ha calificado.
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -296,7 +371,8 @@ export function JobDetailPage() {
             )}
 
             {isOwner &&
-              (job.status === 'IN_PROGRESS' || job.status === 'COMPLETED') && (
+              (job.status === 'IN_PROGRESS' || job.status === 'COMPLETED') &&
+              job.agreementConfirmedAt && (
                 <>
                   <Separator />
                   {job.status === 'IN_PROGRESS' ? (
@@ -357,9 +433,49 @@ export function JobDetailPage() {
               </>
             )}
 
-            {isAssignedWorker && job.status === 'IN_PROGRESS' && (
-              <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-center text-sm font-medium text-primary">
-                Este trabajo esta asignado a ti
+            {job.status === 'IN_PROGRESS' && isOwner && (
+              <div className="space-y-2">
+                {!job.agreementConfirmedAt ? (
+                  <>
+                    <Button
+                      className="w-full"
+                      onClick={() => confirmAgreement.mutate()}
+                      disabled={confirmAgreement.isPending}
+                    >
+                      Confirmar acuerdo
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => releaseWorker.mutate()}
+                      disabled={releaseWorker.isPending}
+                    >
+                      No hubo acuerdo
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-center text-sm text-success">Acuerdo confirmado</p>
+                )}
+              </div>
+            )}
+
+            {job.status === 'IN_PROGRESS' && isAssignedWorker && (
+              <div className="flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm font-medium text-primary">
+                <span className="relative">
+                  <MessageCircle className="size-4" />
+                  <span className="absolute -right-0.5 -top-0.5 flex size-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+                    <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  En negociacion por WhatsApp
+                  <span className="ml-1 inline-flex">
+                    <span className="animate-[pulse_1.4s_ease-in-out_infinite]">.</span>
+                    <span className="animate-[pulse_1.4s_ease-in-out_infinite] [animation-delay:200ms]">.</span>
+                    <span className="animate-[pulse_1.4s_ease-in-out_infinite] [animation-delay:400ms]">.</span>
+                  </span>
+                </span>
               </div>
             )}
           </div>
