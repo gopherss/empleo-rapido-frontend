@@ -2,6 +2,7 @@ import { Briefcase, MapPin, MessageCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { RatingStars } from '@/components/common/RatingStars'
+import { VerifiedBadge } from '@/components/common/VerifiedBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { resolveMediaUrl } from '@/lib/api'
@@ -52,8 +53,9 @@ export function ApplicantCard({
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate font-semibold">
+                <p className="flex items-center gap-1.5 truncate font-semibold">
                   {applicant.firstName} {applicant.lastName}
+                  <VerifiedBadge status={applicant.idVerificationStatus} />
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
                   {applicant.headline ?? 'Trabajador de reparaciones'}

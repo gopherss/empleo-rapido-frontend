@@ -2,6 +2,7 @@ import { api } from '@/lib/api'
 import type { AuthUser } from '@/types'
 
 export interface UpdateUserPayload {
+  email?: string
   firstName?: string
   lastName?: string
   phone?: string
@@ -17,6 +18,16 @@ export interface UpdateLocationPayload {
 
 export async function updateMe(payload: UpdateUserPayload): Promise<AuthUser> {
   const { data } = await api.patch<AuthUser>('/users/me', payload)
+  return data
+}
+
+export async function updatePassword(
+  password: string,
+): Promise<{ success: boolean }> {
+  const { data } = await api.patch<{ success: boolean }>(
+    '/users/me/password',
+    { password },
+  )
   return data
 }
 

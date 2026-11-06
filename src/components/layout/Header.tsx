@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
   { to: '/jobs', label: 'Trabajos', roles: ['WORKER'] },
   { to: '/applications', label: 'Mis postulaciones', roles: ['WORKER'] },
   { to: '/my-jobs', label: 'Mis publicaciones', roles: ['HOMEOWNER'] },
+  { to: '/admin', label: 'Admin', roles: ['ADMIN'] },
 ]
 
 export function Header() {

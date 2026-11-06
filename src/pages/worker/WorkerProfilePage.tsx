@@ -2,6 +2,7 @@ import { Plus, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
 import { RatingStars } from '@/components/common/RatingStars'
+import { VerifiedBadge } from '@/components/common/VerifiedBadge'
 import { PageLoader } from '@/components/common/Spinner'
 import { FieldError } from '@/components/common/FieldError'
 import { Badge } from '@/components/ui/badge'
@@ -338,6 +339,7 @@ function WorkerCvForm({ cv }: { cv: WorkerCv }) {
               <Badge variant={cv.isAvailable ? 'success' : 'secondary'}>
                 {cv.isAvailable ? 'Disponible' : 'No disponible'}
               </Badge>
+              <VerifiedBadge status={cv.idVerificationStatus} />
             </CardContent>
           </Card>
 

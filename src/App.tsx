@@ -9,6 +9,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthLayout } from '@/pages/auth/AuthLayout'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { HomeRedirect } from '@/pages/HomeRedirect'
+import { AdminPage } from '@/pages/admin/AdminPage'
 import { JobDetailPage } from '@/pages/jobs/JobDetailPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { JobFormPage } from '@/pages/owner/JobFormPage'
@@ -103,6 +104,14 @@ function App() {
 
                 <Route path="/workers/:id" element={<WorkerPublicPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireRole roles={['ADMIN']}>
+                      <AdminPage />
+                    </RequireRole>
+                  }
+                />
               </Route>
             </Route>
 

@@ -270,6 +270,19 @@ export function JobDetailPage() {
                   ? `${user?.firstName} ${user?.lastName}`
                   : `${job.homeowner.firstName} ${job.homeowner.lastName}`}
               </p>
+              {!isOwner && (job.homeownerReviewCount ?? 0) > 0 && (
+                <div className="flex items-center gap-2">
+                  <RatingStars
+                    value={job.homeownerRating ?? 0}
+                    size="sm"
+                    showValue
+                  />
+                  <span className="text-muted-foreground">
+                    {job.homeownerReviewCount} resena
+                    {job.homeownerReviewCount === 1 ? '' : 's'}
+                  </span>
+                </div>
+              )}
               {isOwner ? (
                 <p className="text-muted-foreground">
                   Esta es tu publicacion.

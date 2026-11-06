@@ -30,7 +30,5 @@ export interface IdentityStatus {
 export interface AuthResponse {
   user: AuthUser
   accessToken: string
-  refreshToken: string
   accessTokenExpiresIn: number
-  refreshTokenExpiresIn: number
 }

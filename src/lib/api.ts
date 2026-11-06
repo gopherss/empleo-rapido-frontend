@@ -16,6 +16,8 @@ interface RetryableConfig extends InternalAxiosRequestConfig {
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
+  // Necesario para enviar/recibir la cookie HttpOnly del refresh token.
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
@@ -29,13 +31,10 @@ api.interceptors.request.use((config) => {
 let refreshPromise: Promise<string | null> | null = null
 
 export async function refreshSession(): Promise<string | null> {
-  const { refreshToken } = useAuthStore.getState()
-  if (!refreshToken) return null
-
   const { data } = await axios.post<AuthResponse>(
     `${API_URL}/auth/refresh`,
-    { refreshToken },
-    { headers: { 'Content-Type': 'application/json' } },
+    null,
+    { withCredentials: true },
   )
   useAuthStore.getState().setSession(data)
   return data.accessToken

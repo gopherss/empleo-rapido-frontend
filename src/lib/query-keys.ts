@@ -1,5 +1,6 @@
 import type { ListJobsParams, ListMyJobsParams } from '@/api/jobs'
 import type { ListMyApplicationsParams } from '@/api/applications'
+import type { AdminJobsParams, AdminUsersParams } from '@/api/admin'
 
 export const queryKeys = {
   me: ['me'] as const,
@@ -24,5 +25,10 @@ export const queryKeys = {
     cv: (id: string) => ['workers', 'cv', id] as const,
     reviews: (id: string) => ['workers', 'reviews', id] as const,
     myCv: ['workers', 'me'] as const,
+  },
+  admin: {
+    stats: ['admin', 'stats'] as const,
+    users: (params: AdminUsersParams) => ['admin', 'users', params] as const,
+    jobs: (params: AdminJobsParams) => ['admin', 'jobs', params] as const,
   },
 } as const

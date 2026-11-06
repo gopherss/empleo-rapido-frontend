@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import {
   updateLocation,
   updateMe,
+  updatePassword,
   uploadAvatar,
   type UpdateLocationPayload,
   type UpdateUserPayload,
@@ -20,6 +21,16 @@ export function useUpdateMe() {
       updateUser(user)
       queryClient.setQueryData(['me'], user)
       toast.success('Perfil actualizado')
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+  })
+}
+
+export function useUpdatePassword() {
+  return useMutation({
+    mutationFn: (password: string) => updatePassword(password),
+    onSuccess: () => {
+      toast.success('Contrasena actualizada')
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
   })

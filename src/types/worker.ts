@@ -1,4 +1,5 @@
 import type { Currency, WorkCategory } from './common'
+import type { IdVerificationStatus } from './auth'
 
 export interface WorkerProfile {
   id: string
@@ -23,6 +24,7 @@ export interface WorkerCv {
   lastName: string
   avatarUrl: string | null
   city: string | null
+  idVerificationStatus: IdVerificationStatus
   phone: string | null
   headline: string | null
   bio: string | null

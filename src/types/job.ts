@@ -41,6 +41,8 @@ export interface JobListItem {
   photo: string | null
   photoCount: number
   distanceKm: number | null
+  homeownerRating?: number | null
+  homeownerReviewCount?: number
   applicationCount: number
   pendingApplicationCount: number
   applied: boolean

@@ -15,26 +15,36 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { useLocationCapture } from '@/hooks/useLocationCapture'
-import { useUpdateMe } from '@/hooks/useUsers'
+import { useUpdateMe, useUpdatePassword } from '@/hooks/useUsers'
 import { useAuthStore } from '@/store/auth'
 import { ROLE_LABELS } from '@/types'
 import {
   LIMITS,
+  validateEmail,
+  validatePassword,
   validatePhone,
   validateRequired,
 } from '@/lib/validation'
 
 type FormErrors = Partial<
-  Record<'firstName' | 'lastName' | 'phone' | 'city', string | null>
+  Record<
+    'firstName' | 'lastName' | 'phone' | 'city' | 'email' | 'password' | 'confirmPassword',
+    string | null
+  >
 >
 
 export function SettingsPage() {
   const user = useAuthStore((state) => state.user)
   const updateMe = useUpdateMe()
+  const changePassword = useUpdatePassword()
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
+  const [email, setEmail] = useState(user?.email ?? '')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [city, setCity] = useState(user?.city ?? '')
   const [address, setAddress] = useState(user?.address ?? '')
   const [errors, setErrors] = useState<FormErrors>({})
@@ -54,22 +64,63 @@ export function SettingsPage() {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
 
+    const wantsPassword = Boolean(newPassword || confirmPassword)
+
     const next: FormErrors = {
       firstName: validateRequired(firstName, 'tu nombre', LIMITS.name),
       lastName: validateRequired(lastName, 'tu apellido', LIMITS.name),
       phone: validatePhone(phone, { required: true }),
+      email: validateEmail(email),
       city: validateRequired(city, 'tu ciudad', LIMITS.city),
+      password: wantsPassword ? validatePassword(newPassword) : null,
+      confirmPassword: wantsPassword
+        ? newPassword === confirmPassword
+          ? null
+          : 'Las contrasenas no coinciden'
+        : null,
     }
     setErrors(next)
     if (Object.values(next).some(Boolean)) return
 
-    updateMe.mutate({
+    const emailChanged = Boolean(
+      user && email.trim().toLowerCase() !== user.email,
+    )
+    const basePayload = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       phone: phone.trim(),
       city: city.trim(),
       address: address.trim(),
-    })
+    }
+    const clearPasswords = () => {
+      setNewPassword('')
+      setConfirmPassword('')
+    }
+
+    if (wantsPassword) {
+      updateMe.mutate(
+        {
+          ...basePayload,
+          ...(emailChanged ? { email: email.trim().toLowerCase() } : {}),
+        },
+        {
+          onSuccess: () => {
+            changePassword.mutate(newPassword, {
+              onSuccess: clearPasswords,
+            })
+          },
+        },
+      )
+      return
+    }
+
+    updateMe.mutate(
+      {
+        ...basePayload,
+        ...(emailChanged ? { email: email.trim().toLowerCase() } : {}),
+      },
+      { onSuccess: clearPasswords },
+    )
   }
 
   return (
@@ -144,6 +195,23 @@ export function SettingsPage() {
             />
 
             <div className="space-y-2">
+              <Label htmlFor="email">Correo</Label>
+              <Input
+                id="email"
+                type="email"
+                maxLength={LIMITS.email}
+                autoComplete="email"
+                aria-invalid={Boolean(errors.email)}
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                  clearError('email')
+                }}
+              />
+              <FieldError message={errors.email} />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="address">Direccion</Label>
               <Input
                 id="address"
@@ -173,9 +241,50 @@ export function SettingsPage() {
               inline
             />
 
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nueva contrasena</Label>
+                <PasswordInput
+                  id="newPassword"
+                  autoComplete="new-password"
+                  maxLength={LIMITS.passwordMax}
+                  aria-invalid={Boolean(errors.password)}
+                  value={newPassword}
+                  onChange={(event) => {
+                    setNewPassword(event.target.value)
+                    clearError('password')
+                  }}
+                />
+                <FieldError message={errors.password} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar contrasena</Label>
+                <PasswordInput
+                  id="confirmPassword"
+                  autoComplete="new-password"
+                  maxLength={LIMITS.passwordMax}
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value)
+                    clearError('confirmPassword')
+                  }}
+                />
+                <FieldError message={errors.confirmPassword} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Dejalo vacio si no deseas cambiar tu contrasena.
+            </p>
+
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" disabled={updateMe.isPending}>
-                {updateMe.isPending ? 'Guardando...' : 'Guardar cambios'}
+              <Button
+                type="submit"
+                disabled={updateMe.isPending || changePassword.isPending}
+              >
+                {updateMe.isPending || changePassword.isPending
+                  ? 'Guardando...'
+                  : 'Guardar cambios'}
               </Button>
             </div>
 
@@ -189,7 +298,7 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      <IdentityVerificationCard />
+      {user?.role !== 'ADMIN' && <IdentityVerificationCard />}
     </div>
   )
 }

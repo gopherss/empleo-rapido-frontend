@@ -1,10 +1,12 @@
 import type { ApplicationStatus } from './application-status'
+import type { IdVerificationStatus } from './auth'
 import type { WorkCategory } from './common'
 import type { JobStatus } from './job'
 
 export interface Applicant {
   applicationId: string
   status: ApplicationStatus
+  idVerificationStatus: IdVerificationStatus
   message: string | null
   appliedAt: string
   workerId: string

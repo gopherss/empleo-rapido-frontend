@@ -1,9 +1,10 @@
-import { MapPin, Phone, Briefcase, Clock, Check, X, ArrowLeft } from 'lucide-react'
+import { MapPin, Phone, Briefcase, Clock, Check, X, ArrowLeft, ImageIcon, Images } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
 
 import { PageLoader } from '@/components/common/Spinner'
 import { RatingStars } from '@/components/common/RatingStars'
+import { VerifiedBadge } from '@/components/common/VerifiedBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,6 +30,7 @@ export function WorkerPublicPage() {
   const { data: cv, isLoading, isError } = useWorkerCv(id)
   const { data: reviews } = useWorkerReviews(id)
   const [zoom, setZoom] = useState(false)
+  const [photoZoom, setPhotoZoom] = useState<string | null>(null)
 
   const fromJobId = searchParams.get('fromJob') ?? undefined
   const { data: job } = useJob(fromJobId)
@@ -95,6 +97,7 @@ export function WorkerPublicPage() {
             <Badge variant={cv.isAvailable ? 'success' : 'secondary'}>
               {cv.isAvailable ? 'Disponible' : 'No disponible'}
             </Badge>
+            <VerifiedBadge status={cv.idVerificationStatus} />
           </div>
           <p className="text-muted-foreground">
             {cv.headline ?? 'Trabajador de reparaciones'}
@@ -140,40 +143,78 @@ export function WorkerPublicPage() {
             <CardHeader>
               <CardTitle className="text-base">Resenas recibidas</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               {reviews && reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <div key={review.id} className="space-y-1.5 border-b border-border pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <RatingStars value={review.rating} />
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(review.createdAt)}
-                      </span>
-                    </div>
-                    {review.comment && (
-                      <p className="text-sm text-muted-foreground">{review.comment}</p>
-                    )}
-                    {review.job && (
-                      <p className="text-xs text-muted-foreground">
-                        Trabajo: {review.job.title} ({review.job.city})
-                      </p>
-                    )}
-                    {review.photos.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {review.photos.map((photo) => (
-                          <img
-                            key={photo}
-                            src={resolveMediaUrl(photo)}
-                            alt="Trabajo terminado"
-                            className="size-20 rounded-md object-cover"
-                          />
-                        ))}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {reviews.map((review) => {
+                    const hero = review.photos[0] ?? null
+                    return (
+                      <div
+                        key={review.id}
+                        className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+                          {hero ? (
+                            <img
+                              src={resolveMediaUrl(hero)}
+                              alt={`Trabajo: ${review.job?.title ?? ''}`}
+                              className="size-full cursor-zoom-in object-cover transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                              onClick={() => setPhotoZoom(hero)}
+                            />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-muted-foreground">
+                              <ImageIcon className="size-8" />
+                            </div>
+                          )}
+                          {review.photos.length > 1 && (
+                            <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-medium shadow-sm backdrop-blur">
+                              <Images className="size-3" />
+                              {review.photos.length}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-1 flex-col gap-1.5 p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <RatingStars value={review.rating} size="sm" showValue />
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatDate(review.createdAt)}
+                            </span>
+                          </div>
+                          <p className="line-clamp-1 text-sm font-semibold">
+                            {review.job?.title ?? 'Trabajo realizado'}
+                          </p>
+                          {review.comment && (
+                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                              {review.comment}
+                            </p>
+                          )}
+                          <p className="mt-auto text-xs text-muted-foreground">
+                            {review.job ? `${review.job.category && CATEGORY_LABELS[review.job.category]} - ${review.job.city}` : ''}
+                          </p>
+                          {review.photos.length > 1 && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {review.photos.slice(1).map((photo) => (
+                                <img
+                                  key={photo}
+                                  src={resolveMediaUrl(photo)}
+                                  alt="Foto del trabajo"
+                                  className="size-14 cursor-zoom-in rounded-md object-cover transition hover:opacity-80"
+                                  loading="lazy"
+                                  onClick={() => setPhotoZoom(photo)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))
+                    )
+                  })}
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Todavia no tiene resenas.</p>
+                <p className="text-sm text-muted-foreground">
+                  Todavia no tiene resenas.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -257,6 +298,18 @@ export function WorkerPublicPage() {
             <img
               src={resolveMediaUrl(cv.avatarUrl)}
               alt=""
+              className="max-h-[80vh] w-full rounded-md object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={photoZoom !== null} onOpenChange={(o) => !o && setPhotoZoom(null)}>
+        <DialogContent className="max-w-2xl p-2">
+          {photoZoom && (
+            <img
+              src={resolveMediaUrl(photoZoom)}
+              alt="Foto del trabajo terminado"
               className="max-h-[80vh] w-full rounded-md object-contain"
             />
           )}

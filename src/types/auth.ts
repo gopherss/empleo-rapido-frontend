@@ -1,9 +1,10 @@
-export const ROLES = ['WORKER', 'HOMEOWNER'] as const
+export const ROLES = ['WORKER', 'HOMEOWNER', 'ADMIN'] as const
 export type Role = (typeof ROLES)[number]
 
 export const ROLE_LABELS: Record<Role, string> = {
   WORKER: 'Trabajador',
   HOMEOWNER: 'Dueno de casa',
+  ADMIN: 'Administrador',
 }
 
 export const ID_VERIFICATION_STATUSES = [

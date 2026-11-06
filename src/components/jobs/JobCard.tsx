@@ -1,4 +1,4 @@
-import { CheckCircle2, ImageIcon, MapPin, UserPlus, Users } from 'lucide-react'
+import { CheckCircle2, ImageIcon, MapPin, Star, UserPlus, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -68,6 +68,16 @@ export function JobCard({ job }: { job: JobListItem }) {
             {job.city}
             {job.distanceKm !== null && ` - ${formatDistance(job.distanceKm)}`}
           </span>
+          {(job.homeownerReviewCount ?? 0) > 0 && (
+            <span
+              className="inline-flex items-center gap-1"
+              title="Reputacion del dueno"
+            >
+              <Star className="size-3.5 fill-amber-500 text-amber-500" />
+              {(job.homeownerRating ?? 0).toFixed(1)} (
+              {job.homeownerReviewCount})
+            </span>
+          )}
           {job.photoCount > 0 && (
             <span className="inline-flex items-center gap-1">
               <ImageIcon className="size-3.5" />

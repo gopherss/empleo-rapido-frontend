@@ -53,14 +53,11 @@ export function useRegister() {
 export function useLogout() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const refreshToken = useAuthStore((state) => state.refreshToken)
   const clearSession = useAuthStore((state) => state.clearSession)
 
   return useMutation({
     mutationFn: async () => {
-      if (refreshToken) {
-        await logout(refreshToken).catch(() => undefined)
-      }
+      await logout().catch(() => undefined)
     },
     onSettled: () => {
       clearSession()
@@ -94,13 +91,15 @@ export function useCurrentUser() {
 
 export function useSessionBootstrap() {
   const hydrated = useAuthStore((state) => state.hydrated)
-  const refreshToken = useAuthStore((state) => state.refreshToken)
+  const user = useAuthStore((state) => state.user)
   const accessToken = useAuthStore((state) => state.accessToken)
   const clearSession = useAuthStore((state) => state.clearSession)
 
   useEffect(() => {
     if (!hydrated) return
-    if (!refreshToken || accessToken) return
+    // Al recargar el access token se pierde; si hay usuario persistido la
+    // cookie HttpOnly debe devolver un access token nuevo.
+    if (!user || accessToken) return
 
     let active = true
     refreshSession().catch(() => {
@@ -110,5 +109,5 @@ export function useSessionBootstrap() {
     return () => {
       active = false
     }
-  }, [hydrated, refreshToken, accessToken, clearSession])
+  }, [hydrated, user, accessToken, clearSession])
 }

@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react'
+import { Bell, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/hooks/useNotifications'
+import { useDeleteNotification, useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/hooks/useNotifications'
 import { formatRelativeDate } from '@/lib/format'
 
 export function NotificationBell() {
@@ -19,6 +19,7 @@ export function NotificationBell() {
   const { data } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
+  const deleteNotification = useDeleteNotification()
   const [open, setOpen] = useState(false)
 
   const unreadCount = data?.unreadCount ?? 0
@@ -32,6 +33,11 @@ export function NotificationBell() {
     if (notification.link) {
       navigate(notification.link)
     }
+  }
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    deleteNotification.mutate(id)
   }
 
   return (
@@ -72,12 +78,22 @@ export function NotificationBell() {
           notifications.map((notification) => (
             <DropdownMenuItem
               key={notification.id}
-              className="flex flex-col items-start gap-1 py-2"
+              className="group/item flex flex-col items-start gap-1 py-2"
               onClick={() => handleClick(notification)}
             >
               <div className="flex w-full items-center justify-between gap-2">
                 <p className="font-medium">{notification.title}</p>
-                {!notification.read && <span className="size-1.5 rounded-full bg-primary" />}
+                <div className="flex items-center gap-1.5">
+                  {!notification.read && <span className="size-1.5 rounded-full bg-primary" />}
+                  <button
+                    type="button"
+                    aria-label="Eliminar notificacion"
+                    className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover/item:opacity-100 hover:text-destructive"
+                    onClick={(e) => handleDelete(e, notification.id)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">{notification.message}</p>
               <p className="text-xs text-muted-foreground">
